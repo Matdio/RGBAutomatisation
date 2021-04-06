@@ -1,2 +1,2 @@
 # RGBAutomatisation
-Automatisation of colourcomposition from 3 RGB images
+Automatisation of colourcomposition from 3 R/G/B images
