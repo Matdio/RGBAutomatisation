@@ -1,5 +1,6 @@
 from astropy.io import fits
 import numpy as np
+import tifffile as tif
 
 #define hdul
 image_position = "fits/first_fit.fit"
@@ -28,5 +29,12 @@ for i in range(int(resy / 2)):
         #rggb
         #xes.append((data[i*2-1][j*2-1], (data[i*2][j*2-1] + data[i*2-1][j*2])/2, data[i*2][j*2]*fact))
     output.append(xes)
+    print(i)
     
-outArray = np.array(output)  
+
+    
+outArray = np.array(output)
+print("almost done")
+with tif.TiffWriter('temp.tif', bigtiff=True) as tif:
+     for i in range(outArray.shape[0]):
+         tif.save(outArray[i], compress=6)
