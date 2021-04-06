@@ -10,8 +10,8 @@ print(data)
 
 
 
-resx = 100
-resy = 100
+resx = 5202
+resy = 3465
 
 fact = 1
 
