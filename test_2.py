@@ -36,6 +36,7 @@ for i in range(int(resy / 2)):
     output.append(xes)
     
 outArray = np.array(output)
+print(outArray)
 
 imsave('test.tif', outArray)
 
