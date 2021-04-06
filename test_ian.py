@@ -11,7 +11,7 @@ print(data)
 
 
 resx = 5202
-resy = 3465
+resy = 3464
 
 fact = 1
 
