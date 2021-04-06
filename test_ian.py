@@ -7,3 +7,18 @@ hdul.info()
 
 data = hdul[0].data
 print(data)
+
+
+
+resx = 100
+resy = 100
+
+fact = 1
+
+output = []
+
+for i in range(resx/2):
+    xes = []
+    for j in range(resy/2):
+        xes.append((data[i*2][j*2]*fact, (data[i*2][j*2-1] + data[i*2-1][j*2])/2, data[i*2-1][j*2-1]))
+    output.append(xes)
