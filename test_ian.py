@@ -1,5 +1,9 @@
 from astropy.io import fits
-#fits_image_filename = fits.open('first_fit.fit')
+import numpy
 
-hdul = fits.open('fits/first_fit.fit')
+image_position = "fits/first_fit.fit"
+hdul = fits.open(image_position)
 hdul.info()
+
+data = hdul[0].data
+print(data)
