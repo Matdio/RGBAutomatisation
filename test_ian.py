@@ -1,30 +1,32 @@
 from astropy.io import fits
 import numpy as np
 
+#define hdul
 image_position = "fits/first_fit.fit"
 hdul = fits.open(image_position)
-hdul.info()
+#get resolution and check if resolution is divisible by 2 and is odd
+def check_res(res):
+    while (res % 2) != 0:
+        res = res - 1
+    return(res)
+
+resx = check_res(hdul[0].header[3])
+resy = check_res(hdul[0].header[4])
 
 data = hdul[0].data
 
-
-
-resx = 5202
-resy = 3464
 
 fact = 1
 
 output = []
 
-for i in range(int(resy/2)):
+for i in range(int(resy / 2)):
     xes = []
-    for j in range(int(resx/2)):
+    for j in range(int(resx / 2)):
         #bggr
         xes.append((int(data[i*2][j*2]*fact), int((data[i*2][j*2-1] + data[i*2-1][j*2])/2), int(data[i*2-1][j*2-1])))
         #rggb
         #xes.append((data[i*2-1][j*2-1], (data[i*2][j*2-1] + data[i*2-1][j*2])/2, data[i*2][j*2]*fact))
-        
     output.append(xes)
-    
     
 outArray = np.array(output)  
