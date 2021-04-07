@@ -41,9 +41,15 @@ data = hdul[0].data
 
 bitn = 16
 
-#fact = (2**16-1) / (2**bitn-1)
-fact = 1
+fact = (2**16-1) / (2**bitn-1)
+#fact = 1
 output = []
+
+def functions(x1, x2, x3):
+    x1 = (2**bitn)*x1**0.5
+    x2 = (2**bitn)*x2**0.5
+    x3 = (2**bitn)*x3**0.5
+    return(x1, x2, x3)
 
 for i in range(int(resy / 2)):
     xes = []
@@ -51,13 +57,16 @@ for i in range(int(resy / 2)):
         #bggr
         #xes.append((int(data[i*2][j*2]*fact), int((data[i*2][j*2-1] + data[i*2-1][j*2])/2), int(data[i*2-1][j*2-1])))
         #rggb
-        xes.append(rgb_to_hsv(data[i*2-1][j*2-1]*fact, (data[i*2][j*2-1] + data[i*2-1][j*2])/2*fact, data[i*2][j*2]*fact))
+        xes.append(functions(data[i*2-1][j*2-1]*fact, (data[i*2][j*2-1] + data[i*2-1][j*2])/2*fact, data[i*2][j*2]*fact))
         #blue
         #xes.append(int(data[i*2][j*2]*fact))
     if (i % 100) == 0:
         print(i)
     output.append(xes)
+
+
     
+
 outArray = np.array(output, "uint" + str(bitn))
 print(outArray)
 
