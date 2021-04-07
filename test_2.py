@@ -1,6 +1,7 @@
 from astropy.io import fits
 import numpy as np
 from tifffile import imsave
+#from matplotlib import pyplot
 
 #define hdul
 image_position = "fits/first_fit.fit"
@@ -37,9 +38,9 @@ for i in range(int(resy / 2)):
     output.append(xes)
     
 outArray = np.array(output)
-print(outArray)
+#print(outArray)
 
-imsave('test.tif', outArray)
+imsave("test.tif", outArray)
 
 
 
