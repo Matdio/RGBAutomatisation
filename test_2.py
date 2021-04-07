@@ -41,8 +41,8 @@ for i in range(int(resy / 2)):
     
 outArray = np.array(output)
 #print(outArray)
+imwrite('temp.tif', data, photometric='rgb')
 
-imsave("test.tif", outArray)
 
 
 
