@@ -33,6 +33,7 @@ for i in range(int(resy / 2)):
         xes.append(int(data[i*2][j*2]*fact))
     if (i % 100) == 0:
         print(i)
+        print(xes)
     output.append(xes)
     
 outArray = np.array(output)
