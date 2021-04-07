@@ -18,10 +18,10 @@ resy = check_res(hdul[0].header[4])
 data = hdul[0].data
 
 
+bitn = 16
 
-
-fact = 65536/255
-
+fact = (2**16-1) / (2**bitn-1)
+fact = 1
 output = []
 
 for i in range(int(resy / 2)):
@@ -30,14 +30,14 @@ for i in range(int(resy / 2)):
         #bggr
         #xes.append((int(data[i*2][j*2]*fact), int((data[i*2][j*2-1] + data[i*2-1][j*2])/2), int(data[i*2-1][j*2-1])))
         #rggb
-        xes.append((data[i*2-1][j*2-1], (data[i*2][j*2-1] + data[i*2-1][j*2])/2, data[i*2][j*2]*fact))
+        xes.append((data[i*2-1][j*2-1]*fact, (data[i*2][j*2-1] + data[i*2-1][j*2])/2*fact, data[i*2][j*2]*fact))
         #blue
         #xes.append(int(data[i*2][j*2]*fact))
     if (i % 100) == 0:
         print(i)
     output.append(xes)
     
-outArray = np.array(output, "uint8")
+outArray = np.array(output, "uint" + str(bitn))
 print(outArray)
 
 tiff.imwrite('finite.tif', outArray, photometric='rgb')
