@@ -18,5 +18,5 @@ for i in range(maxx):
 outArray = np.array(outArray)
 print(outArray)        
 
-tiff.imwrite("trying.tif", data = outArray)
+tiff.imwrite("trying.tif", data = outArray, dtype = tuple)
         
