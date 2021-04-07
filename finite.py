@@ -21,10 +21,19 @@ data = hdul[0].data
 bitn = 8
 bitIn = 16
 
+m = 0.05
 
-def mappingFunction(x):
-    y = x**0.5
-    return y
+
+def mappingFunction(x, m):
+    if x == 0:
+        return 0
+    elif x == m:
+        return 0.5
+    elif x == 1:
+        return 1
+    else:
+        y = ((m-1)*x)/((((2*m)-1)*x)-m)
+        return y
 
 def RGBTransformToBit(resx, resy, data, bitn, bitIn):
     fact =  (2**bitn-1) / (2**bitIn-1)
@@ -61,7 +70,7 @@ def RGBTransformTo1(resx, resy, data, bitIn):
     return output
 
 
-def RGBTransformNStretch(resx, resy, data, bitIn):
+def RGBTransformNStretch(resx, resy, data, bitIn, m):
     output = []
     fact = 1/(2**bitIn)
     for i in range(int(resy / 2)):
@@ -70,7 +79,7 @@ def RGBTransformNStretch(resx, resy, data, bitIn):
             #bggr
             #xes.append((int(data[i*2][j*2]*fact), int((data[i*2][j*2-1] + data[i*2-1][j*2])/2), int(data[i*2-1][j*2-1])))
             #rggb
-            xes.append((mappingFunction(data[i*2-1][j*2-1]*fact)*(2**bitIn), mappingFunction(((data[i*2][j*2-1] + data[i*2-1][j*2])/2)*fact)*(2**bitIn), mappingFunction(data[i*2][j*2]*fact)*(2**bitIn)))
+            xes.append((mappingFunction(data[i*2-1][j*2-1]*fact, m)*(2**bitIn), mappingFunction(((data[i*2][j*2-1] + data[i*2-1][j*2])/2)*fact, m)*(2**bitIn), mappingFunction(data[i*2][j*2]*fact, m)*(2**bitIn)))
             #blue
             #xes.append(int(data[i*2][j*2]*fact))
         if (i % 100) == 0:
@@ -105,7 +114,7 @@ def RGBStretch(data):
             
             
         
-output = RGBTransformNStretch(resx, resy, data, bitIn)
+output = RGBTransformNStretch(resx, resy, data, bitIn, m)
 
 outArray = np.array(output, "uint16")
 print(outArray)
