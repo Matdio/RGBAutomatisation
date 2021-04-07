@@ -52,7 +52,6 @@ for i in range(int(resy / 2)):
         #xes.append((int(data[i*2][j*2]*fact), int((data[i*2][j*2-1] + data[i*2-1][j*2])/2), int(data[i*2-1][j*2-1])))
         #rggb
         xes.append(rgb_to_hsv(data[i*2-1][j*2-1]*fact, (data[i*2][j*2-1] + data[i*2-1][j*2])/2*fact, data[i*2][j*2]*fact))
-        
         #blue
         #xes.append(int(data[i*2][j*2]*fact))
     if (i % 100) == 0:
