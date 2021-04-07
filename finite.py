@@ -63,7 +63,7 @@ def RGBTransformTo1(resx, resy, data, bitIn):
 
 def RGBTransformNStretch(resx, resy, data, bitIn):
     output = []
-    fact = 1/bitIn
+    fact = 1/(2**bitIn)
     for i in range(int(resy / 2)):
         xes = []
         for j in range(int(resx / 2)):
@@ -107,7 +107,7 @@ def RGBStretch(data):
         
 output = RGBTransformNStretch(resx, resy, data, bitIn)
 
-outArray = np.array(output, "uint8")
+outArray = np.array(output, "uint16")
 print(outArray)
 
 tiff.imwrite('finite.tif', outArray, photometric='rgb')
