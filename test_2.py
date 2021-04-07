@@ -12,7 +12,7 @@ output = []
 image_position = "fits/first_fit.fit"
 
 #check if resolution is divisible by 2 and is odd
-def check_res(res):
+def fix_res(res):
     while (res % 2) != 0:
         res = res - 1
     return(res)
@@ -21,8 +21,8 @@ def check_res(res):
 def needed_data():
     global resx, resy, data
     hdul = fits.open(image_position)
-    resx = check_res(hdul[0].header[3])
-    resy = check_res(hdul[0].header[4])
+    resx = fix_res(hdul[0].header[3])
+    resy = fix_res(hdul[0].header[4])
     data = hdul[0].data
 
 #function for mapping
@@ -52,6 +52,7 @@ def TransformStretch(resx, resy, data, bitIn, m):
             print(i)
         output.append(xes)
     return output
+
 
 needed_data()
 output = TransformStretch(resx, resy, data, bitIn, m)
