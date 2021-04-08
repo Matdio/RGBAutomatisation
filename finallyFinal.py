@@ -14,6 +14,8 @@ boolAll = 1
 
 picNames = ["rgb", "r", "g", "b", "g1", "g2"]
 
+name = "Picture1"
+
 
 m = 0.015
 
@@ -76,6 +78,10 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n):
             preR = (preR - low)/ (high - low)
             preG = (preG - low)/ (high - low)
             preB = (preB - low)/ (high - low)
+            preG1 = data[i*2][j*2-1]
+            preG2 = data[i*2-1][j*2]
+            preG1 = (preG1 - low)/ (high - low)
+            preG2 = (preG2 - low)/ (high - low)
             if preR <= 0:
                 preR = 0
             if preR >= 1:
@@ -88,9 +94,19 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n):
                 preB = 0
             if preB >= 1:
                 preB = 1
+            if preG1 <= 0:
+                preG1 = 0
+            if preG1 >= 1:
+                preG1 = 1
+            if preG2 <= 0:
+                preG2 = 0
+            if preG2 >= 1:
+                preG2 = 1
             r = mappingFunction(preR*fact, m)*(2**bitn)
             g = mappingFunction(preG*fact, m)*(2**bitn)
             b = mappingFunction(preB*fact, m)*(2**bitn)
+            g1 = mappingFunction(preG1*fact, m)*(2**bitn)
+            g2 = mappingFunction(preG2*fact, m)*(2**bitn)
             
             
             
@@ -98,8 +114,8 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n):
             xes[1].append((r, 0, 0))
             xes[2].append((0, g, 0))
             xes[3].append((0, 0, b))
-            xes[4].append((0, g, 0))
-            xes[5].append((0, g, 0))
+            xes[4].append((0, g1, 0))
+            xes[5].append((0, g2, 0))
             
         if (i % 100) == 0:
             print(i)
@@ -196,6 +212,7 @@ if boolAll == 0:
 else:
     outArray = [[],[],[],[],[],[]]
     for i in range(len(output)):
+        print(i)
         outArray[i] = np.array(output[i], "uint" + str(bitn))
 
 #print(outArray)
@@ -212,7 +229,7 @@ else:
         os.mkdir(directory)
         print("Directory " , directory ,  " Created ") 
         for i in range(len(picNames)):
-            tiff.imwrite("ALL" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif' + "/" + picNames[i] + "_" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif', outArray[i], photometric = "rgb")
+            tiff.imwrite("ALL" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif' + "/" + picNames[i] + "_" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + name + '.tif', outArray[i], photometric = "rgb")
     except FileExistsError:
         print("Directory " , directory ,  " already exists")
 print(time.process_time() - start)    
