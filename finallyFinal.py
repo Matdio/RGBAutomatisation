@@ -10,7 +10,7 @@ start = time.process_time()
 bitn = 16
 bitIn = 16
 
-boolAll = 0
+boolAll = 1
 
 picNames = ["rgb", "r", "g", "b", "g1", "g2"]
 
@@ -78,10 +78,10 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n):
             preR = (preR - low)/ (high - low)
             preG = (preG - low)/ (high - low)
             preB = (preB - low)/ (high - low)
-            """preG1 = data[i*2][j*2-1]
-            preG2 = data[i*2-1][j*2]
+            preG1 = data[i*2][j*2+1]
+            preG2 = data[i*2+1][j*2]
             preG1 = (preG1 - low)/ (high - low)
-            preG2 = (preG2 - low)/ (high - low)"""
+            preG2 = (preG2 - low)/ (high - low)
             if preR <= 0:
                 preR = 0
             if preR >= 1:
@@ -94,19 +94,21 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n):
                 preB = 0
             if preB >= 1:
                 preB = 1
-            """if preG1 <= 0:
+            if preG1 <= 0:
                 preG1 = 0
             if preG1 >= 1:
                 preG1 = 1
             if preG2 <= 0:
                 preG2 = 0
             if preG2 >= 1:
-                preG2 = 1"""
+                preG2 = 1
             r = mappingFunction(preR*fact, m)*(2**bitn)
             g = mappingFunction(preG*fact, m)*(2**bitn)
             b = mappingFunction(preB*fact, m)*(2**bitn)
-            g1 = mappingFunction(preG*fact, m)*(2**bitn)
-            g2 = mappingFunction(preG*fact, m)*(2**bitn)
+            #g1 = mappingFunction(preG1*fact, m)*(2**bitn)
+            #g2 = mappingFunction(preG2*fact, m)*(2**bitn)
+            g1 = g
+            g2 = g
             
             
             
