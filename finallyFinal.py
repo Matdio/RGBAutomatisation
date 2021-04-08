@@ -2,21 +2,24 @@ from astropy.io import fits
 import numpy as np
 import tifffile as tiff
 import time
+import threading
 start = time.process_time()
 
 #variables
 bitn = 16
 bitIn = 16
 
-m = 0.1
+m = 0.001
+
+n = 8
 
 output = []
 image_position = "fits/first_fit.fit"
 
-lowPercentClip = 0
+lowPercentClip = 70
 highPercentClip = 100
 
-
+tOutput = []
 
 
 #check if resolution is divisible by 2 and is odd
@@ -47,10 +50,15 @@ def mappingFunction(x, m):
     #return x**0.5
 
 #RGB Transform and Stretch
-def TransformStretch(resx, resy, data, bitIn, m, low, high):
+def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n):
+    global tOutput
+    start = int(((resy/(2*(n)))*y))
+    stop = int((resy/(2*(n)))*(y+1))
+    #print(start, stop)
     output = []
     fact = 1
-    for i in range(int(resy / 2)):
+    for i in range(start, stop):
+    #for i in range(int(resy / 2)):
         xes = []
         for j in range(int(resx / 2)):
             preR = data[i*2-1][j*2-1]
@@ -81,22 +89,41 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high):
             
         if (i % 100) == 0:
             print(i)
+            
         output.append(xes)
-    return output
+    tOutput[y] = output
 
-
+def multiThreading(n):
+    global resx, resy, data, bitIn, m, lowerClip, higherClip, tOutput
+    Threads = []
+    for i in range(n):
+        nT = threading.Thread(target = TransformStretch, args = (resx, resy, data, bitIn, m, lowerClip, higherClip, i, n,))
+        Threads.append(nT)
+    output = []
+    for i in range(n):
+        tOutput.append(0) 
+    for i in range(n):
+        Threads[i].start()
+        #print(output)
+    for i in range(n):
+        Threads[i].join()
+    final = []
+    for i in range(len(tOutput)):
+        final.extend(tOutput[i])
+    
+    return final
 
 needed_data()
 
 lowerClip = np.percentile(data, lowPercentClip)
 higherClip = np.percentile(data, highPercentClip)
-print(lowerClip, higherClip)
+#print(lowerClip, higherClip)
 
-output = TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip)
-
+#output = TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip, 0, 4)
+output = multiThreading(n)
 outArray = np.array(output, "uint16")
 
-print(outArray)
+#print(outArray)
 print(time.process_time() - start)
 
 tiff.imwrite('finite.tif', outArray, photometric='rgb')
