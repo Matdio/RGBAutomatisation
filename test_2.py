@@ -2,6 +2,7 @@ from astropy.io import fits
 import numpy as np
 import tifffile as tiff
 import threading
+import multiprocessing
 import time
 
 #variables
@@ -9,6 +10,7 @@ bitn = 16
 bitIn = 16
 
 m = 0.05
+n = 4
 
 output = []
 image_position = "fits/first_fit.fit"
@@ -40,13 +42,11 @@ def mappingFunction(x, m):
         return ((m-1)*x)/((((2*m)-1)*x)-m)
 
 #RGB Transform and Stretch
-def TransformStretch1(resx, resy, data, bitIn, m, y, yi):
-    global output1
-    global output2
+def TransformStretch1(resx, resy, data, bitIn, m, y, yi, q):
     output = []
     fact = 1/(2**bitIn)
     for i in range(int(y//2)):
-        i += yi//2
+        i += (y*yi)//2
         xes = []
         for j in range(int(resx / 2)):
             r = mappingFunction(data[i*2-1][j*2-1]*fact, m)*(2**bitIn)
@@ -57,10 +57,16 @@ def TransformStretch1(resx, resy, data, bitIn, m, y, yi):
         if (i % 100) == 0:
             print(i)
         output.append(xes)
-    if y[0][0] == 0:
+    print("Process done: " + str(yi))
+    q.put(output)
+    return
+    
+
+
+    """if int(y) == 0:
         output1 = output
-    elif y != 0:
-        output2 = output
+    elif int(y) != 0:
+        output2 = output"""
 
     
 def split_array(x):
@@ -69,27 +75,39 @@ def split_array(x):
     return(x1)
 
 def start_multithreading(resx, resy, data, bitIn, m):
-    y = split_array(2)
-    print(y)
-    t1 = threading.Thread(target=TransformStretch1, args=(resx, resy, data, bitIn, m, y, y*0))
-    t2 = threading.Thread(target=TransformStretch1, args=(resx, resy, data, bitIn, m, y, y*1))
+    q = multiprocessing.Queue()
+    y = split_array(n)
+    print("t: " + str(y))
+    threads = []
+    final = []
+    tOutput = []
+    print("break1")
+    if __name__ == '__main__':
+        for i in range(n):
+            threads.append(multiprocessing.Process(target=TransformStretch1, args=(resx, resy, data, bitIn, m, y, i, q,)))
+            threads[i].start()
+        
+        for i in range(n):
+            queue = None
+            print("break3")
+            queue = q.get()
+            print("Output of Process " + str(i))
+            final.extend(queue)
+            print("final got extended")
+        
+        for i in range(n):
+            threads[i].join()
+            print("break4")
+        
+        for i in range(n):
+            print("break5")
     
-    t1.start()
-    t2.start()
-    #print("No. of active threads: " + str(threading.active_count()))
-    #print("break")
-    t1.join()
-    t2.join()
-    output = output1.extend(output2)
-    print(output1)
-    print(output2)
-    return(output)
+    return(final)
     
 
 needed_data()
 output = start_multithreading(resx, resy, data, bitIn, m)
-print(output)
 outArray = np.array(output, "uint16")
-print(outArray)
+print("done")
 
 tiff.imwrite('finite.tif', outArray, photometric='rgb')
