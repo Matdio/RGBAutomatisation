@@ -3,20 +3,26 @@ import numpy as np
 import tifffile as tiff
 import time
 import threading
+import os
 start = time.process_time()
 
 #variables
 bitn = 16
 bitIn = 16
 
-m = 0.001
+boolAll = 1
+
+picNames = ["rgb", "r", "g", "b", "g1", "g2"]
+
+
+m = 0.015
 
 n = 8
 
 output = []
 image_position = "fits/first_fit.fit"
 
-lowPercentClip = 70
+lowPercentClip = 0
 highPercentClip = 100
 
 tOutput = []
@@ -49,7 +55,58 @@ def mappingFunction(x, m):
     #return x
     #return x**0.5
 
-#RGB Transform and Stretch
+
+
+#RGB Transform and Stretch OUTPUT ALL
+#[0] = coloured [1] = red [2] = greenAVG [3] = blue [4] = green1 [5] = green2
+def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n):
+    global tOutput
+    start = int(((resy/(2*(n)))*y))
+    stop = int((resy/(2*(n)))*(y+1))
+    #print(start, stop)
+    output = [[],[],[],[],[],[]]
+    fact = 1
+    for i in range(start, stop):
+    #for i in range(int(resy / 2)):
+        xes = [[],[],[],[],[],[]]
+        for j in range(int(resx / 2)):
+            preR = data[i*2-1][j*2-1]
+            preG = (data[i*2][j*2-1] + data[i*2-1][j*2])/2
+            preB = data[i*2][j*2]
+            preR = (preR - low)/ (high - low)
+            preG = (preG - low)/ (high - low)
+            preB = (preB - low)/ (high - low)
+            if preR <= 0:
+                preR = 0
+            if preR >= 1:
+                preR = 1
+            if preG <= 0:
+                preG = 0
+            if preG >= 1:
+                preG = 1
+            if preB <= 0:
+                preB = 0
+            if preB >= 1:
+                preB = 1
+            r = mappingFunction(preR*fact, m)*(2**bitn)
+            g = mappingFunction(preG*fact, m)*(2**bitn)
+            b = mappingFunction(preB*fact, m)*(2**bitn)
+            
+            
+            
+            xes[0].append((r, g, b))
+            xes[1].append((r, 0, 0))
+            xes[2].append((0, g, 0))
+            xes[3].append((0, 0, b))
+            xes[4].append((0, g, 0))
+            xes[5].append((0, g, 0))
+            
+        if (i % 100) == 0:
+            print(i)
+        for i in range(len(output)):    
+            output[i].append(xes[i])
+    tOutput[y] = output
+    
 def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n):
     global tOutput
     start = int(((resy/(2*(n)))*y))
@@ -79,9 +136,9 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n):
                 preB = 0
             if preB >= 1:
                 preB = 1
-            r = mappingFunction(preR*fact, m)*(2**bitIn)
-            g = mappingFunction(preG*fact, m)*(2**bitIn)
-            b = mappingFunction(preB*fact, m)*(2**bitIn)
+            r = mappingFunction(preR*fact, m)*(2**bitn)
+            g = mappingFunction(preG*fact, m)*(2**bitn)
+            b = mappingFunction(preB*fact, m)*(2**bitn)
             
             
             
@@ -93,12 +150,16 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n):
         output.append(xes)
     tOutput[y] = output
 
-def multiThreading(n):
+def multiThreading(n, boolAll):
     global resx, resy, data, bitIn, m, lowerClip, higherClip, tOutput
     Threads = []
     for i in range(n):
-        nT = threading.Thread(target = TransformStretch, args = (resx, resy, data, bitIn, m, lowerClip, higherClip, i, n,))
-        Threads.append(nT)
+        if boolAll == 0:
+            nT = threading.Thread(target = TransformStretch, args = (resx, resy, data, bitIn, m, lowerClip, higherClip, i, n,))
+            Threads.append(nT)
+        else:
+            nT = threading.Thread(target = TransformStretchALL, args = (resx, resy, data, bitIn, m, lowerClip, higherClip, i, n,))
+            Threads.append(nT)
     output = []
     for i in range(n):
         tOutput.append(0) 
@@ -107,9 +168,15 @@ def multiThreading(n):
         #print(output)
     for i in range(n):
         Threads[i].join()
-    final = []
-    for i in range(len(tOutput)):
-        final.extend(tOutput[i])
+    if boolAll == 0:
+        final = []
+        for i in range(len(tOutput)):
+            final.extend(tOutput[i])
+    else:
+        final = [[],[],[],[],[],[]]
+        for i in range(len(tOutput)):
+            for j in range(len(tOutput[i])):
+                final[j].extend(tOutput[i][j])
     
     return final
 
@@ -117,13 +184,35 @@ needed_data()
 
 lowerClip = np.percentile(data, lowPercentClip)
 higherClip = np.percentile(data, highPercentClip)
-#print(lowerClip, higherClip)
+print(lowerClip, higherClip)
 
 #output = TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip, 0, 4)
-output = multiThreading(n)
-outArray = np.array(output, "uint16")
+output = multiThreading(n, boolAll)
+
+
+
+if boolAll == 0:
+    outArray = np.array(output, "uint" + str(bitn))
+else:
+    outArray = [[],[],[],[],[],[]]
+    for i in range(len(output)):
+        outArray[i] = np.array(output[i], "uint" + str(bitn))
 
 #print(outArray)
 print(time.process_time() - start)
+start = time.process_time()
 
-tiff.imwrite('finite.tif', outArray, photometric='rgb')
+if boolAll == 0:
+    tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif', outArray, photometric='rgb')
+    
+else:
+    directory = "ALL" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif'
+    try:
+        # Create target Directory
+        os.mkdir(directory)
+        print("Directory " , directory ,  " Created ") 
+        for i in range(len(picNames)):
+            tiff.imwrite("ALL" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif' + "/" + picNames[i] + "_" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif', outArray[i], photometric = "rgb")
+    except FileExistsError:
+        print("Directory " , directory ,  " already exists")
+print(time.process_time() - start)    
