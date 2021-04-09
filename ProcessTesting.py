@@ -27,7 +27,7 @@ def main(n):
     for p in processes:
         p.start()
     
-        
+    for i    
     results = [queue.get() for _ in range(len(processes)+1)]
     print(results)
 
