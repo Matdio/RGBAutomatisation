@@ -7,8 +7,8 @@ import multiprocessing
 start = time.process_time()
 
 #variables
-bitn = 8
-bitIn = 8
+bitn = 16
+bitIn = 16
 
 boolAll = 1
 
@@ -69,7 +69,7 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, mpQueue):
     global tOutput
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
-    #print(start, stop)
+    ##print(start, stop)
     output = [[],[],[],[],[],[]]
     fact = 1
     for i in range(start, stop):
@@ -86,7 +86,7 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, mpQueue):
             preG2 = data[i*2+1][j*2]
             preG1 = (preG1 - low)/ (high - low)
             preG2 = (preG2 - low)/ (high - low)
-            #print(preG, preG1, preG2, preR)
+            ##print(preG, preG1, preG2, preR)
             #time.sleep(1)
             if preR <= 0:
                 preR = 0
@@ -111,10 +111,10 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, mpQueue):
             r = mappingFunction(preR*fact, m)*(2**bitn)
             g = mappingFunction(preG*fact, m)*(2**bitn)
             b = mappingFunction(preB*fact, m)*(2**bitn)
-            #g1 = mappingFunction(preG1*fact, m)*(2**bitn)
-            #g2 = mappingFunction(preG2*fact, m)*(2**bitn)
-            g1 = g
-            g2 = g
+            g1 = mappingFunction(preG1*fact, m)*(2**bitn)
+            g2 = mappingFunction(preG2*fact, m)*(2**bitn)
+            #g1 = g
+            #g2 = g
             
             
             
@@ -127,16 +127,17 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, mpQueue):
             
         if (i % 100) == 0:
             print(i)
+            pass
         for i in range(len(output)):    
             output[i].append(xes[i])
-    print(str(len(output)))
+    #print(str(len(output)))
     mpQueue.put(output)
     
 def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, mpQueue):
     global tOutput
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
-    #print(start, stop)
+    ##print(start, stop)
     output = []
     fact = 1
     for i in range(start, stop):
@@ -168,19 +169,18 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, mpQueue):
             
         if (i % 100) == 0:
             print(i)
+            pass
             
         output.append(xes)
     mpQueue.put(output)
 
-def multiProcessing(resx, resy, data, bitIn, m, lowerClip, higherClip, n, boolAll):
+def multiProcessing(resx, resy, data, bitIn, m, lowerClip, higherClip, n):
     global Processes, mpQueue
     results = []
     for i in range(n):
-        Processes[i] = multiprocessing.Process(target=TransformStretch, args=(resx, resy, data, bitIn, m, lowerClip,
-                                                                   higherClip, i, n, mpQueue,))
+        Processes[i] = multiprocessing.Process(target=TransformStretch, args=(resx, resy, data, bitIn, m, lowerClip, higherClip, i, n, mpQueue,))
         Processes[i].start()
-    for i in range(n):
-        Processes[i].start()
+        
     
     for i in range(n):
         results.extend(mpQueue.get())
@@ -190,7 +190,7 @@ def multiProcessing(resx, resy, data, bitIn, m, lowerClip, higherClip, n, boolAl
         p.terminate()
         print("Process " + str(p) + " finished")
     return results
-    print("Done with multiprocessing")
+    #print("Done with multiprocessing")
 
 
 
@@ -202,22 +202,22 @@ def multiProcessingAll(resx, resy, data, bitIn, m, lowerClip, higherClip, n):
         Processes[i] = multiprocessing.Process(target=TransformStretchALL, args=(resx, resy, data, bitIn, m, lowerClip,
                                                                                   higherClip, i, n, mpQueue,))
         Processes[i].start()
-    print("All Processes started")
+    #print("All Processes started")
     for i in range(n):
         results.append(mpQueue.get())
-    print("got informations")
-    print(str(len(results)), str(len(results[0])))
+    #print("got informations")
+    #print(str(len(results)), str(len(results[0])))
     for i in range(len(results)):
         for j in range(len(results[i])):
-            print(j)
+            #print(j)
             final[j].extend(results[i][j])
-    print("edited List")
+    #print("edited List")
     for p in Processes:
         p.join()
         p.terminate()
-        print("Process " + str(p) + " finished")
+        #print("Process " + str(p) + " finished")
     return final
-    print("Done with multiprocessing")
+    #print("Done with multiprocessing")
     
     
 if __name__ == '__main__':
@@ -226,7 +226,7 @@ if __name__ == '__main__':
 
     lowerClip = np.percentile(data, lowPercentClip)
     higherClip = np.percentile(data, highPercentClip)
-    print(lowerClip, higherClip)
+    #print(lowerClip, higherClip)
 
     #output = TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip, 0, 4)
     if boolAll == 0:
@@ -241,12 +241,11 @@ if __name__ == '__main__':
     else:
         outArray = [[],[],[],[],[],[]]
         for i in range(len(output)):
-            print(i)
+            #print(i)
             outArray[i] = np.array(output[i], "uint" + str(bitn))
 
-    #print(outArray)
-    print(time.process_time() - start)
-    start = time.process_time()
+    ##print(outArray)
+    #print(time.process_time() - start)
 
     if boolAll == 0:
         tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif', outArray, photometric='rgb')
@@ -256,7 +255,7 @@ if __name__ == '__main__':
         try:
             # Create target Directory
             os.mkdir(directory)
-            print("Directory " , directory ,  " Created ") 
+            #print("Directory " , directory ,  " Created ") 
             for i in range(len(picNames)):
                 tiff.imwrite("ALL" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif' + "/" + picNames[i] + "_" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + name + '.tif', outArray[i], photometric = "rgb")
         except FileExistsError:
