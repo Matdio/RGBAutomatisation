@@ -1,6 +1,10 @@
 from astropy.io import fits
 import numpy as np
 import tifffile as tiff
+<<<<<<< Updated upstream
+=======
+import threading
+>>>>>>> Stashed changes
 import multiprocessing
 import time
 
@@ -79,6 +83,10 @@ def start_multithreading(resx, resy, data, bitIn, m):
     print("t: " + str(y))
     threads = []
     final = []
+<<<<<<< Updated upstream
+=======
+    tOutput = []
+>>>>>>> Stashed changes
     print("break1")
     if __name__ == '__main__':
         for i in range(n):
