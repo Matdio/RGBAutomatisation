@@ -1,7 +1,6 @@
 from astropy.io import fits
 import numpy as np
 import tifffile as tiff
-import threading
 import multiprocessing
 import time
 
@@ -80,7 +79,6 @@ def start_multithreading(resx, resy, data, bitIn, m):
     print("t: " + str(y))
     threads = []
     final = []
-    tOutput = []
     print("break1")
     if __name__ == '__main__':
         for i in range(n):
