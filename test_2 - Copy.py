@@ -17,7 +17,7 @@ picNames = ["rgb", "r", "g", "b", "g1", "g2"]
 
 m = 0.015
 
-n = 8
+n = 4
 
 output = []
 image_position = "fits/first_fit.fit"
@@ -59,11 +59,11 @@ def mappingFunction(x, m):
 
 #RGB Transform and Stretch OUTPUT ALL
 #[0] = coloured [1] = red [2] = greenAVG [3] = blue [4] = green1 [5] = green2
-def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, q1):
+def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, q):
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
     #print(start, stop)
-    print("Process: " + str(y))
+    #print("Process: " + str(y))
     output = [[],[],[],[],[],[]]
     fact = 1
     for i in range(start, stop):
@@ -105,13 +105,14 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, q1):
             print(i)
         for i in range(len(output)):    
             output[i].append(xes[i])
-    q1.put(output)
+    q.put(output)
+    print("done:" + str(y))
     
-def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, q2):
+def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, q):
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
     #print(start, stop)
-    print("Process: " + str(y))
+    #print("Process: " + str(y))
     output = []
     fact = 1
     for i in range(start, stop):
@@ -146,61 +147,56 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, q2):
             print(i)
             
         output.append(xes)
-    q2.put(output)
+    q.put(output)
+    print("done:" + str(y))
 
 def multiProcessing(n, boolAll, resx, resy, data, bitIn, m, lowerClip, higherClip):
-    q1 = multiprocessing.Queue()
-    q2 = multiprocessing.Queue()
+    q = multiprocessing.Queue()
     Processes = []
     for i in range(n):
         Processes.append(0)
     final = []
     prefinal1 = []
     prefinal2 = []
-    for i in range(n):
-        if boolAll == 0:
-            Processes[i] = multiprocessing.Process(target=TransformStretch, args=(resx, resy, data, bitIn, m,
-                                                                                    lowerClip, higherClip, i, n, q2,))
-            print(Processes[i])
-            #Processes = nP
-        else:
-            Processes[i] = multiprocessing.Process(target=TransformStretchALL, args=(resx, resy, data, bitIn, m,
-                                                                                       lowerClip, higherClip, i, n, q1,))
-            print(Processes[i])
-    for i in range(n):
-        print("break1")
-        Processes[i].start()
-        print("break2")
-    
     
     if boolAll == 0:
-        for i in range(n):
-            queue = None
-            queue = q2.get()
-            prefinal1.append(queue)
+        processes = [multiprocessing.Process(target=TransformStretch, args=(resx, resy, data, bitIn, m,lowerClip, higherClip, _, n, q, )) for _ in range(n)]
     else:
-        for i in range(n):
-            queue = None
-            queue = q1.get()
-            prefinal2.append(queue)
+        processes = [multiprocessing.Process(target=TransformStretchALL, args=(resx, resy, data, bitIn, m,lowerClip, higherClip, _, n, q, )) for _ in range(n)]
+
+    for p in processes:
+        p.start()
+
+    
+    for p in processes:
+        print("waiting for" + str(p))
+        p.join()
         
-    for i in range(n):
-        Processes[i].join()
+        print("joined:" + str(p))
         
+
+    print("starting evaluation")
+    results = [q.get() for _ in processes]
+    print("got the results")
+   
+    
     if boolAll == 0:
         final = []
         for i in range(n):
-            final.extend(prefinal1[i])
+            final.extend(results[i])
         
     else:
         final = [[],[],[],[],[],[]]
-        for i in range(len(prefinal2)):
-            for j in range(len(prefinal2[i])):
-                final[j].extend(prefinal2[i][j])
+        for i in range(len(results)):
+            for j in range(len(results[i])):
+                final[j].extend(results[i][j])
+    print("finished all threads")
     return final
 
 
 needed_data()
+
+print("hello i'm at the end")
 
 lowerClip = np.percentile(data, lowPercentClip)
 higherClip = np.percentile(data, highPercentClip)
@@ -210,7 +206,7 @@ print(lowerClip, higherClip)
 if __name__ == '__main__':
     output = multiProcessing(n, boolAll, resx, resy, data, bitIn, m, lowerClip, higherClip)
 
-
+print("ENNND")
 
 if boolAll == 0:
     outArray = np.array(output, "uint" + str(bitn))
@@ -220,7 +216,7 @@ else:
         outArray[i] = np.array(output[i], "uint" + str(bitn))
 
 #print(outArray)
-print(time.process_time() - start)
+#print(time.process_time() - start)
 start = time.process_time()
 
 if boolAll == 0:
@@ -236,4 +232,4 @@ else:
             tiff.imwrite("ALL" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif' + "/" + picNames[i] + "_" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + 'finite.tif', outArray[i], photometric = "rgb")
     except FileExistsError:
         print("Directory " , directory ,  " already exists")
-print(time.process_time() - start)    
+#print(time.process_time() - start)    
