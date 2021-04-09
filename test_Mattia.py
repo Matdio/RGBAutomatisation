@@ -83,8 +83,6 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n):
             preG2 = data[i*2+1][j*2]
             preG1 = (preG1 - low)/ (high - low)
             preG2 = (preG2 - low)/ (high - low)
-            print(preG, preG1, preG2, preR)
-            time.sleep(1)
             if preR <= 0:
                 preR = 0
             if preR >= 1:
@@ -171,17 +169,35 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n):
         output.append(xes)
     tOutput[y] = output
 
-def multiProcessing():
-    pass
+def combine(array):
+    if boolAll == 0:
+        final = []
+        for i in range(len(array)):
+            final.extend(array[i])
+    else:
+        final = [[],[],[],[],[],[]]
+        for i in range(len(array)):
+            for j in range(len(array[i])):
+                final[j].extend(array[i][j])
 
 needed_data()
+
+
 
 lowerClip = np.percentile(data, lowPercentClip)
 higherClip = np.percentile(data, highPercentClip)
 print(lowerClip, higherClip)
 
 #output = TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip, 0, 4)
-output = multiThreading(n, boolAll)
+
+y = 0
+
+if boolAll == 0:
+    TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip, y, n)
+else:
+    TransformStretchALL(resx, resy, data, bitIn, m, lowerClip, higherClip, y, n)
+    
+output = combine(tOutput)
 
 
 
@@ -193,7 +209,6 @@ else:
         print(i)
         outArray[i] = np.array(output[i], "uint" + str(bitn))
 
-#print(outArray)
 print(time.process_time() - start)
 start = time.process_time()
 
