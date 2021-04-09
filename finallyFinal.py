@@ -19,7 +19,7 @@ name = "Picture1"
 
 m = 0.015
 
-n = 8
+n = 1
 
 output = []
 image_position = "fits/first_fit.fit"
@@ -82,6 +82,8 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n):
             preG2 = data[i*2+1][j*2]
             preG1 = (preG1 - low)/ (high - low)
             preG2 = (preG2 - low)/ (high - low)
+            print(preG, preG1, preG2, preR)
+            time.sleep(1)
             if preR <= 0:
                 preR = 0
             if preR >= 1:
