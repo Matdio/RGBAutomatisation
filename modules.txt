@@ -1,3 +1,0 @@
-from astropy import fits
-matplotlib
-import numpy as np
