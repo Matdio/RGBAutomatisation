@@ -10,7 +10,7 @@ start = time.process_time()
 bitn = 16
 bitIn = 16
 
-boolAll = 0
+boolAll = 1
 
 picNames = ["rgb", "r", "g", "b", "g1", "g2"]
 
@@ -59,7 +59,7 @@ def mappingFunction(x, m):
 
 #RGB Transform and Stretch OUTPUT ALL
 #[0] = coloured [1] = red [2] = greenAVG [3] = blue [4] = green1 [5] = green2
-def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, q):
+def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, q1):
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
     #print(start, stop)
@@ -105,9 +105,9 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, q):
             print(i)
         for i in range(len(output)):    
             output[i].append(xes[i])
-    q.put(output)
+    q1.put(output)
     
-def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, q):
+def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, q2):
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
     #print(start, stop)
@@ -140,58 +140,63 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, q):
             g = mappingFunction(preG*fact, m)*(2**bitn)
             b = mappingFunction(preB*fact, m)*(2**bitn)
             
-            
-            
             xes.append((r, g, b))
             
         if (i % 100) == 0:
             print(i)
             
         output.append(xes)
-    q.put(output)
+    q2.put(output)
 
 def multiProcessing(n, boolAll, resx, resy, data, bitIn, m, lowerClip, higherClip):
-    q = multiprocessing.Queue()
-    processes = []
+    q1 = multiprocessing.Queue()
+    q2 = multiprocessing.Queue()
+    Processes = []
+    for i in range(n):
+        Processes.append(0)
     final = []
-    if __name__ == '__main__':
-        for i in range(n):
-            if boolAll == 0:
-                nP = multiprocessing.Process(target=TransformStretch, args=(resx, resy, data, bitIn, m,
-                                                                                        lowerClip, higherClip, i, n, q,))
-                processes.append(nP)
-            else:
-                nP = multiprocessing.Process(target=TransformStretchALL, args=(resx, resy, data, bitIn, m,
-                                                                                           lowerClip, higherClip, i, n, q,))
-                processes.append(nP)
-        for i in range(n):
-            print("break1")
-            processes[i].start()
-            print("break2")
-        
-        prefinal1 = []
-        prefinal2 = []
+    prefinal1 = []
+    prefinal2 = []
+    for i in range(n):
+        if boolAll == 0:
+            Processes[i] = multiprocessing.Process(target=TransformStretch, args=(resx, resy, data, bitIn, m,
+                                                                                    lowerClip, higherClip, i, n, q2,))
+            print(Processes[i])
+            #Processes = nP
+        else:
+            Processes[i] = multiprocessing.Process(target=TransformStretchALL, args=(resx, resy, data, bitIn, m,
+                                                                                       lowerClip, higherClip, i, n, q1,))
+            print(Processes[i])
+    for i in range(n):
+        print("break1")
+        Processes[i].start()
+        print("break2")
+    
+    
+    if boolAll == 0:
         for i in range(n):
             queue = None
-            queue = q.get()
-            if boolAll == 0:
-                prefinal1.append(queue)
-            else:
-                prefinal2.append(queue)
-            
+            queue = q2.get()
+            prefinal1.append(queue)
+    else:
         for i in range(n):
-            processes[i].join()
+            queue = None
+            queue = q1.get()
+            prefinal2.append(queue)
+        
+    for i in range(n):
+        Processes[i].join()
         
     if boolAll == 0:
         final = []
         for i in range(n):
-            final.extend(prefinal[i])
+            final.extend(prefinal1[i])
         
     else:
         final = [[],[],[],[],[],[]]
-        for i in range(len(prefinal)):
-            for j in range(len(prefinal[i])):
-                final[j].extend(prefinal[i][j])
+        for i in range(len(prefinal2)):
+            for j in range(len(prefinal2[i])):
+                final[j].extend(prefinal2[i][j])
     return final
 
 
@@ -202,7 +207,8 @@ higherClip = np.percentile(data, highPercentClip)
 print(lowerClip, higherClip)
 
 #output = TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip, 0, 4)
-output = multiProcessing(n, boolAll, resx, resy, data, bitIn, m, lowerClip, higherClip)
+if __name__ == '__main__':
+    output = multiProcessing(n, boolAll, resx, resy, data, bitIn, m, lowerClip, higherClip)
 
 
 
