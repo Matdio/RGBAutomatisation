@@ -2,8 +2,9 @@ from astropy.io import fits
 import numpy as np
 import tifffile as tiff
 import time
+import threading
 import os
-from multiprocessing import Process, Queue
+import multiprocessing as mp
 start = time.process_time()
 
 #variables
@@ -19,7 +20,7 @@ name = "Picture1"
 
 m = 0.015
 
-n = 4
+n = 1
 
 output = []
 image_position = "fits/first_fit.fit"
@@ -61,7 +62,7 @@ def mappingFunction(x, m):
 
 #RGB Transform and Stretch OUTPUT ALL
 #[0] = coloured [1] = red [2] = greenAVG [3] = blue [4] = green1 [5] = green2
-def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, queue):
+def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n):
     global tOutput
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
@@ -123,9 +124,9 @@ def TransformStretchALL(resx, resy, data, bitIn, m, low, high, y, n, queue):
             print(i)
         for i in range(len(output)):    
             output[i].append(xes[i])
-    queue.put(output)
+    tOutput[y] = output
     
-def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, queue):
+def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n):
     global tOutput
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
@@ -166,49 +167,7 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, queue):
             print(i)
             
         output.append(xes)
-    queue.put(output)
-    
-    
-def main(n):
-    print(n)
-    global tOutput
-    queue = Queue()
-    processes = []
-    for i in range(n):
-        processes.append([])
-    
-    if boolAll == 0:
-        for _ in range(n):
-            print("creating processes")
-            processes[_] = Process(target=TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip, _, n, queue))
-            print("created processes")    
-    else:
-        for _ in range(n):
-            print("creating processes")
-            processes[_] = Process(target=TransformStretchALL(resx, resy, data, bitIn, m, lowerClip, higherClip, _, n, queue))
-            print("created processes")      
-    
-    
-    for p in processes:
-        print("started:" + str(p))
-        p.start()
-    
-    results = []
-    counter = 0
-    while counter < len(processes):
-        temp = queue.get()
-        if temp == None:
-            continue
-        else:
-            results.append(temp)
-            counter +=1
-    
-    for p in processes:
-        print("waiting for:" + str(p))
-        p.join()
-        print("joined:" + str(p))
-        
-    tOutput = results
+    tOutput[y] = output
 
 def combine(array):
     if boolAll == 0:
@@ -229,20 +188,14 @@ lowerClip = np.percentile(data, lowPercentClip)
 higherClip = np.percentile(data, highPercentClip)
 print(lowerClip, higherClip)
 
+#output = TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip, 0, 4)
 
 y = 0
 
-if __name__ == "__main__":
-    main(n)
-
-"""if boolAll == 0:
+if boolAll == 0:
     TransformStretch(resx, resy, data, bitIn, m, lowerClip, higherClip, y, n)
 else:
-    TransformStretchALL(resx, resy, data, bitIn, m, lowerClip, higherClip, y, n)"""
-
-
-
-
+    TransformStretchALL(resx, resy, data, bitIn, m, lowerClip, higherClip, y, n)
     
 output = combine(tOutput)
 
