@@ -28,8 +28,8 @@ n = 32
 output = []
 image_position = "fits/first_fit.fit"
 
-lowPercentClip = 60
-highPercentClip = 99.95
+lowPercentClip = 0
+highPercentClip = 100
 
 mpQueue = multiprocessing.Queue()
 Processes = []
