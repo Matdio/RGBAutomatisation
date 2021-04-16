@@ -1,13 +1,18 @@
 from astropy.io import fits
 import numpy as np
 import tifffile as tiff
-import time
 import os
 import multiprocessing
 import colorsys
 from operator import itemgetter
-start = time.process_time()
-
+"""
+Input:
+- CFA-File (Positon of file (absolut or relativ), image_position)
+- Bit-size of brightness value (e.g. 16 or 8, bitIn)
+- midtonesbalance (float, m)$
+- 
+- 
+"""
 #variables
 colMult = 3
 
@@ -21,11 +26,7 @@ bitIn = 16
 
 calibrate = 1
 
-method = 2
-#method 0 = rgbOnlyRGB 1 = ALLRGB 2 = rgbonlyHSV
 
-
-picNames = ["rgb", "r", "g", "b", "g1", "g2"]
 
 nameMain = "RGBHSV2031SClipCalibNO"
 
@@ -169,215 +170,58 @@ def TransformStretchHSV(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
     #Queues the number of the Process and the output list
     output = [y, output]
     mpQueue.put(output)
-    
-    
-def TransformStretchALL(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
-    global tOutput
-    start = int(((resy/(2*(n)))*y))
-    stop = int((resy/(2*(n)))*(y+1))
-    output = [[],[],[],[],[],[]]
-    fact = 1
-    for i in range(start, stop):
-        xes = [[],[],[],[],[],[]]
-        for j in range(int(resx / 2)):
-            pix0 = data[i*2][j*2]
-            pix1 = data[i*2][j*2+1]
-            pix2 = data[i*2+1][j*2]
-            pix3 = data[i*2+1][j*2+1]
-            preRa = pix2
-            preGa= (pix0 + pix3)/2
-            preBa = pix1
-            preR = (preRa - low)/ (high - low)
-            preG = (preGa - low)/ (high - low)
-            preB = (preBa - low)/ (high - low)
-            preG1a = data[i*2][j*2+1]
-            preG2a = data[i*2+1][j*2]
-            preG1 = (preG1a - low)/ (high - low)
-            preG2= (preG2a - low)/ (high - low)
-            if preR <= 0:
-                preR = 0
-            if preR >= 1:
-                preR = 1
-            if preG <= 0:
-                preG = 0
-            if preG >= 1:
-                preG = 1
-            if preB <= 0:
-                preB = 0
-            if preB >= 1:
-                preB = 1
-            if preG1 <= 0:
-                preG1 = 0
-            if preG1 >= 1:
-                preG1 = 1
-            if preG2 <= 0:
-                preG2 = 0
-            if preG2 >= 1:
-                preG2 = 1
-            
-            r = int(stretchingFunction(preR*fact, m)*(2**bitn-1))
-            g = int(stretchingFunction(preG*fact, m)*(2**bitn-1))
-            b = int(stretchingFunction(preB*fact, m)*(2**bitn-1))
-            g1 = int(stretchingFunction(preG1*fact, m)*(2**bitn-1))
-            g2 = int(stretchingFunction(preG2*fact, m)*(2**bitn-1))
-            
 
-            
-            xes[0].append((r, g, b))
-            xes[1].append((r, 0, 0))
-            xes[2].append((0, g, 0))
-            xes[3].append((0, 0, b))
-            xes[4].append((0, g1, 0))
-            xes[5].append((0, g2, 0))
-            
-            
-        if (i % 100) == 0:
-            print(i)
-            pass
-        for i in range(len(output)):    
-            output[i].append(xes[i])
-    output = [y, output]
-    mpQueue.put(output)
-    
-def TransformStretch(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
-    global tOutput
-    start = int(((resy/(2*(n)))*y))
-    stop = int((resy/(2*(n)))*(y+1))
-    output = []
-    fact = 1
-    for i in range(start, stop):
-        xes = []
-        for j in range(int(resx / 2)):
-            pix0 = data[i*2][j*2]
-            pix1 = data[i*2][j*2+1]
-            pix2 = data[i*2+1][j*2]
-            pix3 = data[i*2+1][j*2+1]
-            preRa = pix2
-            preGa= (pix0 + pix3)/2
-            preBa = pix1
-            preR = (preRa - low)/ (high - low)
-            preG = (preGa - low)/ (high - low)
-            preB = (preBa - low)/ (high - low)
-            if preR <= 0:
-                preR = 0
-            if preR >= 1:
-                preR = 1
-            if preG <= 0:
-                preG = 0
-            if preG >= 1:
-                preG = 1
-            if preB <= 0:
-                preB = 0
-            if preB >= 1:
-                preB = 1
-            r = int(stretchingFunction(preR*fact, m)*(2**bitn-1))
-            g = int(stretchingFunction(preG*fact, m)*(2**bitn-1))
-            b = int(stretchingFunction(preB*fact, m)*(2**bitn-1))
-            xes.append((r, g, b))
-            
-        if (i % 100) == 0:
-            print(i)
-            pass
-            
-        output.append(xes)
-    output = [y, output]
-    mpQueue.put(output)
-
+"""
+MultiProcessing:
+    multiProcessing is for the multiProcessing-part of the funciton TransformStretch
+    Variables:
+    - resx: x-Resolution of CFA after editing to a even number. (Argument, Integer)
+    - resy: y-Resolution of CFA after editing to a even number. (Argument, Integer)
+    - data: List of brightnesses of pixels of the CFA-file. (Argument, Array)
+    - bitIn: Bit-size of brightness-values of input-CFA-file. (Argument, Integer)
+    - m: Parameter for the stretch-function, midtonesbalance. (Argument, Float)
+    - lowerClip: Low-procentage to be cliped. (Argument, Procentage/Integer)
+    - higherClip: High-procentage to be cliped. (Argument, Procentage/Integer)
+    - n: Number of Processes for the multiProcessing. (Argument, Integer)
+    - Processes: List Processes, pre-generated. (global, List)
+    - mpQueue: Queue for/of module multiprocessing. (global, Queue)
+    - results: List of the returned values of processes, unsorted. (local, List)
+    - final: List of the returned values of processes, sorted. (local, List)   
+"""
 def multiProcessingHSV(resx, resy, data, bitn, m, lowerClip, higherClip, n):
     global Processes, mpQueue
     results = []
     final = []
+    
+    #generate all Processes and start them
     for i in range(n):
         Processes[i] = multiprocessing.Process(target=TransformStretchHSV, args=(resx, resy, data, bitn, m, lowerClip, higherClip, i, n, mpQueue,))
         Processes[i].start()
-        
     
+    #append returned values of Processes to list results
     for i in range(n):
         results.append(mpQueue.get())
         
     results.sort(key=itemgetter(0))
     
     for i in range(len(results)):
-        final.extend(results[i][1])
-        
-        
-
-        
+        final.extend(results[i][1])    
     
-    
-        
+    #join and close all Processes (without the terminate(), Zombies will be generated)
+    #if death not 0 Zombie-Spwaner
     for p in Processes:
-        
-        if death == 0:
-            p.join()
-            p.terminate()
-    return final
-
-def multiProcessing(resx, resy, data, bitn, m, lowerClip, higherClip, n):
-    global Processes, mpQueue
-    results = []
-    final = []
-    for i in range(n):
-        Processes[i] = multiprocessing.Process(target=TransformStretch, args=(resx, resy, data, bitn, m, lowerClip, higherClip, i, n, mpQueue,))
-        Processes[i].start()
-        
-    for i in range(n):
-        results.append(mpQueue.get())
-        
-    results.sort(key=itemgetter(0))
-    
-    for i in range(len(results)):
-        final.extend(results[i][1])
-    
-        
-    for p in Processes:
-        
         if death == 0:
             p.join()
             p.terminate()
     return final
 
 
-
-def multiProcessingAll(resx, resy, data, bitn, m, lowerClip, higherClip, n):
-    global Processes, mpQueue
-    results = []
-    final = []
-    for i in range(n):
-        Processes[i] = multiprocessing.Process(target=TransformStretchALL, args=(resx, resy, data, bitn, m, lowerClip,
-                                                                                  higherClip, i, n, mpQueue,))
-        Processes[i].start()
-    
-        
-    for i in range(n):
-        results.append(mpQueue.get())
-        
-    results.sort(key=itemgetter(0))
-    
-    for i in range(len(results)):
-        final.append(results[i][1])
-        
-    results = final
-    final = [[],[],[],[],[],[]]
-    for i in range(len(results)):
-        for j in range(len(results[i])):
-            print(j)
-            final[j].extend(results[i][j])
-    for p in Processes:
-        
-        if death == 0:
-            p.join()
-            p.terminate()
-    return final
-    
-    
 if __name__ == '__main__':
 
     needed_data()
 
     lowerClip = np.percentile(data, lowPercentClip)
     higherClip = np.percentile(data, highPercentClip)
-    print(lowerClip, higherClip)
     
     if calibrate == 1:
         redF, greenF, blueF = colourCalibration(data)
@@ -385,30 +229,9 @@ if __name__ == '__main__':
     else:
         redF, greenF, blueF = 1,1,1
         
-    print(redF, greenF, blueF)
+    output = multiProcessingHSV(resx, resy, data, bitn, m, lowerClip, higherClip, n)
 
-
-    #output = TransformStretch(resx, resy, data, bitn, m, lowerClip, higherClip, 0, 4)
-    if method == 0:
-        output = multiProcessing(resx, resy, data, bitn, m, lowerClip, higherClip, n)
-    elif method == 1:
-        output = multiProcessingAll(resx, resy, data, bitn, m, lowerClip, higherClip, n)
-    elif method == 2:
-        output = multiProcessingHSV(resx, resy, data, bitn, m, lowerClip, higherClip, n)
-        
-
-
-
-    if method == 0 or method == 2:
-        outArray = np.array(output, "uint" + str(bitn))
-    elif method == 1:
-        outArray = [[],[],[],[],[],[]]
-        for i in range(len(output)):
-            #print(i)
-            outArray[i] = np.array(output[i], "uint" + str(bitn))
-
-    ##print(outArray)
-    #print(time.process_time() - start)
+    outArray = np.array(output, "uint" + str(bitn))
 
     if method == 0:
         tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain  + '.tif', outArray, photometric='rgb')
@@ -418,7 +241,6 @@ if __name__ == '__main__':
         try:
             # Create target Directory
             os.mkdir(directory)
-            #print("Directory " , directory ,  " Created ") 
             for i in range(len(picNames)):
                 tiff.imwrite(directory + "/" + picNames[i] + "_" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + '.tif', outArray[i], photometric = "rgb")
         except FileExistsError:
@@ -426,6 +248,3 @@ if __name__ == '__main__':
     
     elif method == 2:
         tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + "smooth"   + '.tif', outArray, photometric='rgb')
-    
-    print(time.process_time() - start)    
-    print("done")

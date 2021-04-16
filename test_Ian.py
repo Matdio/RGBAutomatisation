@@ -19,7 +19,7 @@ name = "Picture1"
 
 m = 0.015
 
-n = 8
+n = 16
 
 output = []
 image_position = "fits/first_fit.fit"
@@ -171,6 +171,14 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, mpQueue):
         output.append(xes)
     mpQueue.put(output)
 
+"""
+MultiProcessing:
+    Variables:
+    - resx: x-Resolution of CFA after editing to a even number. (Argument, Integer)
+    - resy: y-Resolution of CFA after editing to a even number. (Argument, Integer)
+    - data: List of Brightnesses of Pixels of the CFA-File. (Argument, Array)
+    - bitIn: 
+"""
 def multiProcessing(resx, resy, data, bitIn, m, lowerClip, higherClip, n, boolAll):
     global Processes, mpQueue
     results = []
@@ -178,11 +186,9 @@ def multiProcessing(resx, resy, data, bitIn, m, lowerClip, higherClip, n, boolAl
         Processes[i] = multiprocessing.Process(target=TransformStretch, args=(resx, resy, data, bitIn, m, lowerClip,
                                                                    higherClip, i, n, mpQueue,))
         Processes[i].start()
-    for i in range(n):
-        Processes[i].start()
     
     for i in range(n):
-        results.extend(mpQueue.get())
+        results.append(mpQueue.get())
         
     for p in Processes:
         p.join()
@@ -203,7 +209,7 @@ def multiProcessingAll(resx, resy, data, bitIn, m, lowerClip, higherClip, n):
         Processes[i].start()
     print("All Processes started")
     for i in range(n):
-        results.extend(mpQueue.get())
+        results.append(mpQueue.get())
     print("got informations")
     for i in range(len(results)):
         for j in range(len(results[i])):
