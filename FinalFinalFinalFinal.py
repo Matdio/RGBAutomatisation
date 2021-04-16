@@ -219,32 +219,27 @@ def multiProcessingHSV(resx, resy, data, bitn, m, lowerClip, higherClip, n):
 if __name__ == '__main__':
 
     needed_data()
-
+    
+    
+    #transforms Clippercentages into concrete values
     lowerClip = np.percentile(data, lowPercentClip)
     higherClip = np.percentile(data, highPercentClip)
     
+    
+    #Defines color calibration factors
     if calibrate == 1:
         redF, greenF, blueF = colourCalibration(data)
         
     else:
         redF, greenF, blueF = 1,1,1
         
-    output = multiProcessingHSV(resx, resy, data, bitn, m, lowerClip, higherClip, n)
-
-    outArray = np.array(output, "uint" + str(bitn))
-
-    if method == 0:
-        tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain  + '.tif', outArray, photometric='rgb')
-        
-    elif method == 1:
-        directory = "ALL_" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + ".tif"
-        try:
-            # Create target Directory
-            os.mkdir(directory)
-            for i in range(len(picNames)):
-                tiff.imwrite(directory + "/" + picNames[i] + "_" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + '.tif', outArray[i], photometric = "rgb")
-        except FileExistsError:
-            print("Directory " , directory ,  " already exists")
     
-    elif method == 2:
-        tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + "smooth"   + '.tif', outArray, photometric='rgb')
+    #executes multiprocessing    
+    output = multiProcessingHSV(resx, resy, data, bitn, m, lowerClip, higherClip, n)
+    
+    
+    #transforms two-dimensional list (output) to numpy array
+    outArray = np.array(output, "uint" + str(bitn))
+    
+    #creates image from numpy array
+    tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + "smooth"   + '.tif', outArray, photometric='rgb')
