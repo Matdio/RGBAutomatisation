@@ -14,7 +14,6 @@ Input:
 - higher border for cliping, percentage (Integer, highPercentClip)
 """
 #variables
-colMult = 3
 
 redF, greenF, blueF = 1, 1, 1
 
@@ -78,6 +77,8 @@ def colourCalibration(data):
     red = []
     green = []
     blue = []
+    
+    #adds respective colour to its list
     for i in range(int(resy/2)):
         for j in range(int(resx/2)):
             red.append(data[i*2+1][j*2])
@@ -85,10 +86,14 @@ def colourCalibration(data):
             blue.append(data[i*2][j*2+1])
         if i%100 == 0:
             print(i)
-            
+    
+    
+    #calculates means of different colours
     redPart = np.mean(red)
     greenPart = np.mean(green)
     bluePart = np.mean(blue)
+    
+    #creates factors for each colour bi adjusting the big ones to the small ones
     if redPart <= greenPart and redPart <= bluePart:
         greenFact = redPart/greenPart
         blueFact = redPart/bluePart
