@@ -1,10 +1,11 @@
-from astropy.io import fits
-import numpy as np
-import tifffile as tiff
-import os
-import multiprocessing
-import colorsys
-from operator import itemgetter
+from astropy.io import fits #not integrated
+import numpy as np #not integrated
+import tifffile as tiff #not integrated
+import os #integrated
+import multiprocessing #integrated
+import colorsys #integrated
+import datetime #integrated
+from operator import itemgetter #integrated
 """
 Input:
 - Image-File (Positon of file (absolut or relativ), image_position)
@@ -12,6 +13,7 @@ Input:
 - midtonesbalance (float(0 - 1), m)
 - lower border for cliping, percenatge (Integer, lowPercentClip)
 - higher border for cliping, percentage (Integer, highPercentClip)
+- colour calibration (Integer (1=True, 0=False), calibrate)
 """
 #variables
 
@@ -22,7 +24,7 @@ death = 0
 bitn = 8
 bitIn = 16
 
-calibrate = 1
+calibrate = 0
 
 nameMain = "RGBHSV2031SClipCalibNO"
 
@@ -127,7 +129,7 @@ MultiProcessing:
     - mpQueue: Queue for/of module multiprocessing, needed to return outputs. (Argument, Queue)
     - bitIn: Bit-size of brightness-values of input-CFA-file. (global, Integer)
     - redF, greenF, blueF: colour calibration Factors. (global, Float)
-    - stop, start: defines start and stop range for current Process, needed because of multiProcessing (local, Integer)
+    - start, stop: defines start and stop range for current Process, needed because of multiProcessing (local, Integer)
     - output: final two dimensional list of image part of the current process. (local, List)
 """    
 def TransformStretchHSV(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
@@ -257,5 +259,9 @@ if __name__ == '__main__':
     outArray = np.array(output, "uint" + str(bitn))
     
     #creates image from numpy array
-    tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + "smooth"   + '.tif', outArray, photometric='rgb')
+    tiff.imwrite(str(datetime.date.today()) + str(datetime.now.strftime("%X")) +
+                 (lowPercentClip) + "_" +
+                 str(highPercentClip) + "_m" +
+                 str(m) + "_" + str(bitn) + "bit_" +
+                 nameMain + "smooth" + '.tif', outArray, photometric='rgb')
 
