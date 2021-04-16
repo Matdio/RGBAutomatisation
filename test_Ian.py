@@ -173,31 +173,36 @@ def TransformStretch(resx, resy, data, bitIn, m, low, high, y, n, mpQueue):
 
 """
 MultiProcessing:
+    multiProcessing is for the multiProcessing-part of the funciton TransformStretch
     Variables:
     - resx: x-Resolution of CFA after editing to a even number. (Argument, Integer)
     - resy: y-Resolution of CFA after editing to a even number. (Argument, Integer)
-    - data: List of Brightnesses of Pixels of the CFA-File. (Argument, Array)
-    - bitIn: 
+    - data: List of brightnesses of pixels of the CFA-file. (Argument, Array)
+    - bitIn: Bit-size of brightness-values of input-CFA-file. (Argument, Integer)
+    - m: Parameter for the stretch-function, midtonesbalance. (Argument, Float)
+    - lowerClip: Low-procentage to be cliped. (Argument, Procentage/Integer)
+    - higherClip: High-procentage to be cliped. (Argument, Procentage/Integer)
+    - n: Number of Processes for the multiProcessing. (Argument, Integer)
+    - Processes: List Processes, pre-generated. (global, List)
+    - mpQueue: Queue for/of module multiprocessing. (global, Queue)
+    - results: List of the returned values of the processes. (local, List)
 """
 def multiProcessing(resx, resy, data, bitIn, m, lowerClip, higherClip, n, boolAll):
     global Processes, mpQueue
     results = []
+    #generate all Processes and start them
     for i in range(n):
         Processes[i] = multiprocessing.Process(target=TransformStretch, args=(resx, resy, data, bitIn, m, lowerClip,
                                                                    higherClip, i, n, mpQueue,))
         Processes[i].start()
-    
+    #append returned values of Processes to list results
     for i in range(n):
         results.append(mpQueue.get())
-        
+    #join and close all Processes (without the terminate(), Zombies will be generated)
     for p in Processes:
         p.join()
         p.terminate()
-        print("Process " + str(p) + " finished")
     return results
-    print("Done with multiprocessing")
-
-
 
 def multiProcessingAll(resx, resy, data, bitIn, m, lowerClip, higherClip, n):
     global Processes, mpQueue

@@ -7,17 +7,16 @@ import colorsys
 from operator import itemgetter
 """
 Input:
-- CFA-File (Positon of file (absolut or relativ), image_position)
+- Image-File (Positon of file (absolut or relativ), image_position)
 - Bit-size of brightness value (e.g. 16 or 8, bitIn)
-- midtonesbalance (float, m)$
-- 
-- 
+- midtonesbalance (float(0 - 1), m)
+- lower border for cliping, percenatge (Integer, lowPercentClip)
+- higher border for cliping, percentage (Integer, highPercentClip)
 """
 #variables
 colMult = 3
 
-redF, greenF, blueF = 1,1,1
-
+redF, greenF, blueF = 1, 1, 1
 
 death = 0
 
@@ -26,10 +25,7 @@ bitIn = 16
 
 calibrate = 1
 
-
-
 nameMain = "RGBHSV2031SClipCalibNO"
-
 
 m = 0.02
 
@@ -110,17 +106,31 @@ def colourCalibration(data):
         
             
             
-    
+"""
+MultiProcessing:
+    multiProcessing is for the multiProcessing-part of the funciton TransformStretch
+    Variables:
+    - resx: x-Resolution of CFA after editing to a even number. (Argument, Integer)
+    - resy: y-Resolution of CFA after editing to a even number. (Argument, Integer)
+    - data: List of brightnesses of pixels of the CFA-file. (Argument, Array)
+    - bitn: Bit-size of output. (Argument, Integer)
+    - m: Parameter for the stretch-function, midtonesbalance. (Argument, Float)
+    - low: Low-percentage to be cliped. (Argument, Percentage/Integer)
+    - high: High-percentage to be cliped. (Argument, Percentage/Integer)
+    - y: Processnumber (Argument, Integer)
+    - n: Number of Processes for the multiProcessing. (Argument, Integer)
+    - mpQueue: Queue for/of module multiprocessing, needed to return outputs. (Argument, Queue)
+    - bitIn: Bit-size of brightness-values of input-CFA-file. (global, Integer)
+    - redF, greenF, blueF: colour calibration Factors. (global, Float)
+    - stop, start: defines start and stop range for current Process, needed because of multiProcessing (local, Integer)
+    - output: final two dimensional list of image part of the current process. (local, List)
+"""    
 def TransformStretchHSV(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
-    global tOutput
     global bitIn
     global redF, greenF, blueF
     
-    #defines start and stop range for current Process
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
-    
-    #final two dimensional list of image part of the current process
     output = []
 
     for i in range(start, stop):
@@ -178,10 +188,10 @@ MultiProcessing:
     - resx: x-Resolution of CFA after editing to a even number. (Argument, Integer)
     - resy: y-Resolution of CFA after editing to a even number. (Argument, Integer)
     - data: List of brightnesses of pixels of the CFA-file. (Argument, Array)
-    - bitIn: Bit-size of brightness-values of input-CFA-file. (Argument, Integer)
+    - bitn: Bit-size of output. (Argument, Integer)
     - m: Parameter for the stretch-function, midtonesbalance. (Argument, Float)
-    - lowerClip: Low-procentage to be cliped. (Argument, Procentage/Integer)
-    - higherClip: High-procentage to be cliped. (Argument, Procentage/Integer)
+    - lowerClip: Low-percentage to be cliped. (Argument, Percentage/Integer)
+    - higherClip: High-percentage to be cliped. (Argument, Percentage/Integer)
     - n: Number of Processes for the multiProcessing. (Argument, Integer)
     - Processes: List Processes, pre-generated. (global, List)
     - mpQueue: Queue for/of module multiprocessing. (global, Queue)
@@ -243,3 +253,4 @@ if __name__ == '__main__':
     
     #creates image from numpy array
     tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + "smooth"   + '.tif', outArray, photometric='rgb')
+
