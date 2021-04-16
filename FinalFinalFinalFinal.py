@@ -1,10 +1,16 @@
+"""
+16.04.2021
+Ian Wimmer and Mattia Brand
+Debayering, stretching and cliping
+"""
+
 from astropy.io import fits #not integrated
 import numpy as np #not integrated
 import tifffile as tiff #not integrated
 import os #integrated
 import multiprocessing #integrated
 import colorsys #integrated
-import datetime #integrated
+from datetime import datetime #integrated
 from operator import itemgetter #integrated
 """
 Input:
@@ -259,7 +265,8 @@ if __name__ == '__main__':
     outArray = np.array(output, "uint" + str(bitn))
     
     #creates image from numpy array
-    tiff.imwrite(str(datetime.date.today()) + str(datetime.now.strftime("%X")) +
+    now = datetime.now()
+    tiff.imwrite(str(now.date()) + "_" + str(now.strftime("%H-%M-%S")) + "_" +
                  (lowPercentClip) + "_" +
                  str(highPercentClip) + "_m" +
                  str(m) + "_" + str(bitn) + "bit_" +
