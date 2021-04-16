@@ -21,8 +21,8 @@ bitIn = 16
 
 calibrate = 1
 
-type = 2
-#type 0 = rgbOnlyRGB 1 = ALLRGB 2 = rgbonlyHSV
+method = 2
+#method 0 = rgbOnlyRGB 1 = ALLRGB 2 = rgbonlyHSV
 
 
 picNames = ["rgb", "r", "g", "b", "g1", "g2"]
@@ -61,8 +61,8 @@ def needed_data():
     resy = fix_res(hdul[0].header[4])
     data = hdul[0].data
 
-#function for mapping
-def mappingFunction(x, m):
+#function for stretching
+def stretchingFunction(x, m):
     if x == 0:
         return 0
     elif x == m:
@@ -71,8 +71,6 @@ def mappingFunction(x, m):
         return 1
     else:
         return ((m-1)*x)/((((2*m)-1)*x)-m)
-    #return x
-    #return x**0.5
 
 
 
@@ -84,9 +82,7 @@ def colourCalibration(data):
     green = []
     blue = []
     for i in range(int(resy/2)):
-        #print(i)
         for j in range(int(resx/2)):
-            #print(j)
             red.append(data[i*2+1][j*2])
             green.append((data[i*2][j*2]+data[i*2+1][j*2+1])/2)
             blue.append(data[i*2][j*2+1])
@@ -118,107 +114,70 @@ def TransformStretchHSV(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
     global tOutput
     global bitIn
     global redF, greenF, blueF
+    
+    #defines start and stop range for current Process
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
+    
+    #final two dimensional list of image part of the current process
     output = []
-    ##print(start, stop)
-    #fact = 1/(2**bitn - 1)
-    fact = (2**bitn-1)/high
+
     for i in range(start, stop):
-    #for i in range(int(resy / 2)):
         xes = []
         for j in range(int(resx / 2)):
+            
+            #define the grid of the bayer-pattern
             pix0 = data[i*2][j*2]
             pix1 = data[i*2][j*2+1]
             pix2 = data[i*2+1][j*2]
             pix3 = data[i*2+1][j*2+1]
+            
+            #defines which pixel corresponds to which colour
             preRa = pix2
             preGa= (pix0 + pix3)/2
             preBa = pix1
+            
+            #RGB-HSV (green/red/blue-F is for colorCalibration
             hsv = colorsys.rgb_to_hsv(preRa*redF, preGa*greenF, preBa*blueF)
             
-            
-            
-            
+            #Normalisation of clipped range
             bright = (hsv[2] - low)/ (high - low)
             
             
-            
-            
-            
+            #clipping of normalised values
             if bright < 0:
-                bright = 0
-                
+                bright = 0 
             if bright > 1:
                 bright = 1
                 
-                
-            bright = mappingFunction(bright, m) 
+            #stretching of clipped values    
+            bright = stretchingFunction(bright, m) 
             
-            
-            #if hsv[2] > 10000:
-                #print(hsv[2], bright)
-                #time.sleep(1)
-            
-            
-            
-            
-            
-        
-        
-            
-            #print(preR, preRa, r, bitn)
-            #time.sleep(1)
-
-            #if isinstance(g, int) == False():
-                #quit()
-            
+            #HSV-RGB (2**bitn-1 is for getting the 0-1 normalised floats to [bitn]-bit vallues)
             newRGB = colorsys.hsv_to_rgb(hsv[0], hsv[1], bright *(2**bitn-1))
-            #newRGB = (bright*(2**bitn-1), bright*(2**bitn-1), bright*(2**bitn-1))
             
-            
-            
-            #print(newRGB)
-            #time.sleep(1)
-            #newNewRGB = (int((mappingFunction(newRGB[0]*fact, m) * (2**bitn -1))), int((mappingFunction(newRGB[1]*fact, m))*(2**bitn -1)), int((mappingFunction(newRGB[2]*fact, m)*(2**bitn -1))))
-            #newNewRGB = (int(newRGB[0]*fact), int(newRGB[1]*fact), int(newRGB[2]*fact))
-            
-            #if preRa - preGa > 1000:
-                #print(newNewRGB, newRGB, hsv[0], hsv[1], v)
-                #time.sleep(1)
             
             xes.append(newRGB)
-            #print(xes)
-            #time.sleep(1)
-            
-            #print(preRa, newNewRGB)
-            #time.sleep(1)
-            
-            
-            
-            
-            
-            #print(str(xes[2]))
-            
+        
+        #prints Progress after every 100 rows
         if (i % 100) == 0:
             print(i)
-            #print(str(xes[2]))
             pass
+        
         output.append(xes)
-        #print(output)
-    #print(str(len(output)))
+        
+    #Queues the number of the Process and the output list
     output = [y, output]
-    #print(output)
     mpQueue.put(output)
+    
+    
 def TransformStretchALL(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
     global tOutput
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
-    ##print(start, stop)
     output = [[],[],[],[],[],[]]
     fact = 1
     for i in range(start, stop):
-    #for i in range(int(resy / 2)):
         xes = [[],[],[],[],[],[]]
         for j in range(int(resx / 2)):
             pix0 = data[i*2][j*2]
@@ -235,8 +194,6 @@ def TransformStretchALL(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
             preG2a = data[i*2+1][j*2]
             preG1 = (preG1a - low)/ (high - low)
             preG2= (preG2a - low)/ (high - low)
-            ##print(preG, preG1, preG2, preR)
-            #time.sleep(1)
             if preR <= 0:
                 preR = 0
             if preR >= 1:
@@ -258,17 +215,13 @@ def TransformStretchALL(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
             if preG2 >= 1:
                 preG2 = 1
             
-            r = int(mappingFunction(preR*fact, m)*(2**bitn-1))
-            g = int(mappingFunction(preG*fact, m)*(2**bitn-1))
-            b = int(mappingFunction(preB*fact, m)*(2**bitn-1))
-            g1 = int(mappingFunction(preG1*fact, m)*(2**bitn-1))
-            g2 = int(mappingFunction(preG2*fact, m)*(2**bitn-1))
+            r = int(stretchingFunction(preR*fact, m)*(2**bitn-1))
+            g = int(stretchingFunction(preG*fact, m)*(2**bitn-1))
+            b = int(stretchingFunction(preB*fact, m)*(2**bitn-1))
+            g1 = int(stretchingFunction(preG1*fact, m)*(2**bitn-1))
+            g2 = int(stretchingFunction(preG2*fact, m)*(2**bitn-1))
             
-            #print(preR, preRa, r, bitn)
-            #time.sleep(1)
 
-            #if isinstance(g, int) == False():
-                #quit()
             
             xes[0].append((r, g, b))
             xes[1].append((r, 0, 0))
@@ -277,11 +230,9 @@ def TransformStretchALL(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
             xes[4].append((0, g1, 0))
             xes[5].append((0, g2, 0))
             
-            #print(str(xes[2]))
             
         if (i % 100) == 0:
             print(i)
-            #print(str(xes[2]))
             pass
         for i in range(len(output)):    
             output[i].append(xes[i])
@@ -292,11 +243,9 @@ def TransformStretch(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
     global tOutput
     start = int(((resy/(2*(n)))*y))
     stop = int((resy/(2*(n)))*(y+1))
-    ##print(start, stop)
     output = []
     fact = 1
     for i in range(start, stop):
-    #for i in range(int(resy / 2)):
         xes = []
         for j in range(int(resx / 2)):
             pix0 = data[i*2][j*2]
@@ -321,9 +270,9 @@ def TransformStretch(resx, resy, data, bitn, m, low, high, y, n, mpQueue):
                 preB = 0
             if preB >= 1:
                 preB = 1
-            r = int(mappingFunction(preR*fact, m)*(2**bitn-1))
-            g = int(mappingFunction(preG*fact, m)*(2**bitn-1))
-            b = int(mappingFunction(preB*fact, m)*(2**bitn-1))
+            r = int(stretchingFunction(preR*fact, m)*(2**bitn-1))
+            g = int(stretchingFunction(preG*fact, m)*(2**bitn-1))
+            b = int(stretchingFunction(preB*fact, m)*(2**bitn-1))
             xes.append((r, g, b))
             
         if (i % 100) == 0:
@@ -363,7 +312,6 @@ def multiProcessingHSV(resx, resy, data, bitn, m, lowerClip, higherClip, n):
             p.join()
             p.terminate()
     return final
-    #print("Done with multiprocessing")
 
 def multiProcessing(resx, resy, data, bitn, m, lowerClip, higherClip, n):
     global Processes, mpQueue
@@ -387,9 +335,7 @@ def multiProcessing(resx, resy, data, bitn, m, lowerClip, higherClip, n):
         if death == 0:
             p.join()
             p.terminate()
-        #print("Process " + str(p) + " finished")
     return final
-    #print("Done with multiprocessing")
 
 
 
@@ -401,7 +347,6 @@ def multiProcessingAll(resx, resy, data, bitn, m, lowerClip, higherClip, n):
         Processes[i] = multiprocessing.Process(target=TransformStretchALL, args=(resx, resy, data, bitn, m, lowerClip,
                                                                                   higherClip, i, n, mpQueue,))
         Processes[i].start()
-    #print("All Processes started")
     
         
     for i in range(n):
@@ -414,22 +359,16 @@ def multiProcessingAll(resx, resy, data, bitn, m, lowerClip, higherClip, n):
         
     results = final
     final = [[],[],[],[],[],[]]
-    #print("got informations")
-    #print(str(len(results)), str(len(results[0])))
     for i in range(len(results)):
         for j in range(len(results[i])):
-            #print(j)
             print(j)
             final[j].extend(results[i][j])
-    #print("edited List")
     for p in Processes:
         
         if death == 0:
             p.join()
             p.terminate()
-        #print("Process " + str(p) + " finished")
     return final
-    #print("Done with multiprocessing")
     
     
 if __name__ == '__main__':
@@ -450,19 +389,19 @@ if __name__ == '__main__':
 
 
     #output = TransformStretch(resx, resy, data, bitn, m, lowerClip, higherClip, 0, 4)
-    if type == 0:
+    if method == 0:
         output = multiProcessing(resx, resy, data, bitn, m, lowerClip, higherClip, n)
-    elif type == 1:
+    elif method == 1:
         output = multiProcessingAll(resx, resy, data, bitn, m, lowerClip, higherClip, n)
-    elif type == 2:
+    elif method == 2:
         output = multiProcessingHSV(resx, resy, data, bitn, m, lowerClip, higherClip, n)
         
 
 
 
-    if type == 0 or type == 2:
+    if method == 0 or method == 2:
         outArray = np.array(output, "uint" + str(bitn))
-    elif type == 1:
+    elif method == 1:
         outArray = [[],[],[],[],[],[]]
         for i in range(len(output)):
             #print(i)
@@ -471,10 +410,10 @@ if __name__ == '__main__':
     ##print(outArray)
     #print(time.process_time() - start)
 
-    if type == 0:
+    if method == 0:
         tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain  + '.tif', outArray, photometric='rgb')
         
-    elif type == 1:
+    elif method == 1:
         directory = "ALL_" + str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + ".tif"
         try:
             # Create target Directory
@@ -485,7 +424,7 @@ if __name__ == '__main__':
         except FileExistsError:
             print("Directory " , directory ,  " already exists")
     
-    elif type == 2:
+    elif method == 2:
         tiff.imwrite(str(lowPercentClip) + "_" + str(highPercentClip) + "_m" + str(m) + "_" + str(bitn) + "bit_" + nameMain + "smooth"   + '.tif', outArray, photometric='rgb')
     
     print(time.process_time() - start)    
