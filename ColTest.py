@@ -1,4 +1,4 @@
 import colorsys
 
-test_color = colorsys.rgb_to_hsv(2567, 2334, 5678)
+test_color = colorsys.rgb_to_hsv(150, 200, 0)
 print(test_color)
